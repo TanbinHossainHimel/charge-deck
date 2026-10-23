@@ -72,6 +72,9 @@ The listing only reads Windows' device list; it never talks to unknown devices.
 
 ## How to build on Windows (beginner friendly)
 
+> 📘 The full step-by-step guide (setup, build, pin, start with Windows, update, uninstall,
+> troubleshooting) is in **[INSTALL.md](INSTALL.md)**. The short version:
+
 1. Install Rust from <https://rustup.rs>. It will ask you to install the
    **Visual Studio C++ Build Tools** (Rust needs Microsoft's linker to make `.exe` files).
    Choose "Desktop development with C++". Or run:
