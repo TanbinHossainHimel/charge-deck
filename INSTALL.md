@@ -73,10 +73,10 @@ cargo build --release
 The first build downloads and compiles the libraries, so it takes a few minutes. When you see
 `Finished release profile`, your programs are here:
 
-| File | What it is |
-|---|---|
-| `target\release\charge-deck.exe` | **The app** (the window with all your batteries). About 11 MB. |
-| `target\release\charge-deck-probe.exe` | A small console tool for checking which devices are found. |
+| File                                   | What it is                                                     |
+|----------------------------------------|----------------------------------------------------------------|
+| `target\release\charge-deck.exe`       | **The app** (the window with all your batteries). About 11 MB. |
+| `target\release\charge-deck-probe.exe` | A small console tool for checking which devices are found.     |
 
 Optional: run the tests (`cargo test`). They don't need any hardware.
 
@@ -151,16 +151,16 @@ the registry.
 
 ## Troubleshooting
 
-| Problem | Fix |
-|---|---|
-| `linker 'link.exe' not found` when building | The C++ Build Tools are missing or half-installed. Redo step 1.1, then open a **new** terminal. |
-| `cargo` is not recognized | Close the terminal and open a new one. In **Git Bash**, add Rust once: `echo 'export PATH="$PATH:$HOME/.cargo/bin"' >> ~/.bashrc`, then open a new Git Bash window. PowerShell usually works without this. |
-| Build says the edition or a feature isn't supported | Your Rust is too old. Run `rustup update`. |
-| The window doesn't open, or is blank | Update your graphics driver. The app draws with DirectX 12 or Vulkan, which almost every PC from the last decade supports. |
-| A device shows wrong or missing values | Close **Armoury Crate / Razer Synapse / Logitech G HUB**. They can compete with Charge Deck for the dongle. Then press **Refresh**. |
-| Antivirus flags the `.exe` | The `.exe` is unsigned and new, so some antivirus programs are suspicious of it. Build it yourself from the source (as above) and add an exclusion for that folder. Charge Deck never touches other programs, never reads input, and never uses the network. See *"Is it safe with anti-cheat?"* in the README. |
-| Razer headset stops answering after charging | Switch the headset off and on again. |
-| Razer or Logitech mouse not found | Those providers are untested and only use vendor HID collections. Run the probe and open a GitHub issue. |
+| Problem                                             | Fix                                                                                                                                                                                                                                                                                                             |
+|-----------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `linker 'link.exe' not found` when building         | The C++ Build Tools are missing or half-installed. Redo step 1.1, then open a **new** terminal.                                                                                                                                                                                                                 |
+| `cargo` is not recognized                           | Close the terminal and open a new one. In **Git Bash**, add Rust once: `echo 'export PATH="$PATH:$HOME/.cargo/bin"' >> ~/.bashrc`, then open a new Git Bash window. PowerShell usually works without this.                                                                                                      |
+| Build says the edition or a feature isn't supported | Your Rust is too old. Run `rustup update`.                                                                                                                                                                                                                                                                      |
+| The window doesn't open, or is blank                | Update your graphics driver. The app draws with DirectX 12 or Vulkan, which almost every PC from the last decade supports.                                                                                                                                                                                      |
+| A device shows wrong or missing values              | Close **Armoury Crate / Razer Synapse / Logitech G HUB**. They can compete with Charge Deck for the dongle. Then press **Refresh**.                                                                                                                                                                             |
+| Antivirus flags the `.exe`                          | The `.exe` is unsigned and new, so some antivirus programs are suspicious of it. Build it yourself from the source (as above) and add an exclusion for that folder. Charge Deck never touches other programs, never reads input, and never uses the network. See *"Is it safe with anti-cheat?"* in the README. |
+| Razer headset stops answering after charging        | Switch the headset off and on again.                                                                                                                                                                                                                                                                            |
+| Razer or Logitech mouse not found                   | Those providers are untested and only use vendor HID collections. Run the probe and open a GitHub issue.                                                                                                                                                                                                        |
 
 ---
 
