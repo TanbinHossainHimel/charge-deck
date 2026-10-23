@@ -96,12 +96,33 @@ fn to_status(raw: Raw, level_scale: bool) -> Status {
 
 pub struct Asus;
 
-impl Asus {
-    fn is_ours(info: &DeviceInfo) -> bool {
-        info.vendor_id() == ASUS_VID
-            && info.usage_page() >= 0xFF00
-            && info.product_string().is_some_and(|p| p.to_uppercase().contains("ROG"))
+/// ROG mouse families that use the classic (no report ID) query.
+/// Rule 6: devices not named here (e.g. keyboards on a charging cable) are
+/// never sent the mouse query. Add a model here once someone confirms it.
+const CLASSIC_MOUSE_NAMES: &[&str] =
+    &["KERIS", "CHAKRAM", "GLADIUS", "PUGIO", "SPATHA", "HARPE", "IMPACT", "STRIX CARRY"];
+
+/// The ONE place that decides what we may ask a collection. Both `scan` and
+/// `claims` use it, so the probe's "claimed by" column is always truthful.
+/// Rule 6: an Omni receiver gets only its two documented queries on its two
+/// documented collections; everything else gets nothing.
+fn queries_for(info: &DeviceInfo) -> &'static [Query] {
+    let product = info.product_string().unwrap_or("").to_uppercase();
+    if info.vendor_id() != ASUS_VID || !product.contains("ROG") {
+        return &[];
     }
+    if product.contains("OMNI") {
+        return match info.usage_page() {
+            0xFF00 => &[Query::Keyboard],
+            0xFF01 => &[Query::OmniMouse],
+            _ => &[],
+        };
+    }
+    // Cabled / classic-receiver mice: only the mouse vendor collection (0xFF01).
+    if info.usage_page() == 0xFF01 && CLASSIC_MOUSE_NAMES.iter().any(|n| product.contains(n)) {
+        return &[Query::ClassicMouse];
+    }
+    &[]
 }
 
 impl Provider for Asus {
@@ -110,22 +131,13 @@ impl Provider for Asus {
     }
 
     fn claims(&self, info: &DeviceInfo) -> bool {
-        Asus::is_ours(info)
+        !queries_for(info).is_empty()
     }
 
     fn scan(&mut self, hid: &HidApi) -> Vec<DeviceBattery> {
         let mut out: Vec<DeviceBattery> = Vec::new();
-        for info in hid.device_list().filter(|i| Asus::is_ours(i)) {
-            // Rule 6: an Omni receiver gets ONLY its two documented queries, on
-            // its two documented collections. The classic (no report ID) query
-            // is only for other ROG devices, never for the Omni's other pages.
-            let is_omni = info.product_string().is_some_and(|p| p.to_uppercase().contains("OMNI"));
-            let queries: &[Query] = match (is_omni, info.usage_page()) {
-                (true, 0xFF00) => &[Query::Keyboard],
-                (true, 0xFF01) => &[Query::OmniMouse],
-                (true, _) => &[],
-                (false, _) => &[Query::ClassicMouse],
-            };
+        for info in hid.device_list() {
+            let queries = queries_for(info);
             if queries.is_empty() {
                 continue;
             }
@@ -138,6 +150,14 @@ impl Provider for Asus {
                     break;
                 }
             }
+        }
+        // A mouse on a cable answers directly while its receiver slot says
+        // "asleep". Show the live card only, not both.
+        let cable_mouse_answered = out
+            .iter()
+            .any(|d| d.id.starts_with("asus:") && d.kind == DeviceKind::Mouse && matches!(d.status, Status::Ok(_)));
+        if cable_mouse_answered {
+            out.retain(|d| !(d.id.starts_with("asus-omni:") && d.kind == DeviceKind::Mouse && d.status == Status::Asleep));
         }
         out
     }
@@ -162,8 +182,10 @@ fn ask(dev: &HidDevice, info: &DeviceInfo, q: Query) -> Option<DeviceBattery> {
         product.to_string()
     };
     let serial = info.serial_number().filter(|s| !s.is_empty()).unwrap_or("");
+    // "asus-omni:" = behind an Omni receiver, "asus:" = cable / classic receiver.
+    let prefix = if q == Query::ClassicMouse { "asus" } else { "asus-omni" };
     Some(DeviceBattery {
-        id: format!("asus:{:04x}:{:04x}:{serial}:{role}", info.vendor_id(), info.product_id()),
+        id: format!("{prefix}:{:04x}:{:04x}:{serial}:{role}", info.vendor_id(), info.product_id()),
         name,
         kind: q.kind(),
         source: SOURCE,
@@ -174,6 +196,17 @@ fn ask(dev: &HidDevice, info: &DeviceInfo, q: Query) -> Option<DeviceBattery> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // Real captures from a ROG Omni receiver and a cabled ROG Keris II Ace.
+    #[test]
+    fn real_captures() {
+        let kb = [0x02, 0x12, 0x01, 0x00, 0x00, 0x00, 0x40, 0x02, 0x01, 0x01, 0x14, 0x40, 0xb9, 0x0f];
+        assert_eq!(Query::Keyboard.parse(&kb), Some(Raw { value: 64, charging: true }));
+        let omni = [0x03, 0x12, 0x07, 0x00, 0x00, 0x42, 0x02, 0x14, 0x24, 0x0f, 0x00, 0x00, 0x01];
+        assert_eq!(Query::OmniMouse.parse(&omni), Some(Raw { value: 66, charging: false }));
+        let cable = [0x12, 0x07, 0x00, 0x00, 0x47, 0x02, 0x14, 0x54, 0x10, 0x01, 0x00, 0x01];
+        assert_eq!(Query::ClassicMouse.parse(&cable), Some(Raw { value: 71, charging: true }));
+    }
 
     #[test]
     fn keyboard_answer() {

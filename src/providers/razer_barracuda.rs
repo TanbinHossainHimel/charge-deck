@@ -218,25 +218,25 @@ impl Link<'_> {
             return None;
         }
         // Remote mode ON: the dongle then forwards our commands to the headset.
-        let reply = self.race(0x0E, &[0x02, 0xE1, 0x01])?;
-        if reply[12] != 0 {
-            return None;
-        }
+        let remote_on = self.race(0x0E, &[0x02, 0xE1, 0x01]).is_some_and(|r| r[12] == 0);
         let mut samples: Vec<u32> = Vec::new();
-        for i in 0..CHARGE_SAMPLES {
-            if i > 0 {
-                sleep(Duration::from_millis(350));
-            }
-            if let Some(r) = self.race(0x06, &[0x01, 0x00, RACE_GET_BATTERY]) {
-                if r.len() >= 15 && r[12] == 0 {
-                    let mv = r[13] as u32 | (r[14] as u32) << 8;
-                    if (2500..=4500).contains(&mv) {
-                        samples.push(mv);
+        if remote_on {
+            for i in 0..CHARGE_SAMPLES {
+                if i > 0 {
+                    sleep(Duration::from_millis(350));
+                }
+                if let Some(r) = self.race(0x06, &[0x01, 0x00, RACE_GET_BATTERY]) {
+                    if r.len() >= 15 && r[12] == 0 {
+                        let mv = r[13] as u32 | (r[14] as u32) << 8;
+                        if (2500..=4500).contains(&mv) {
+                            samples.push(mv);
+                        }
                     }
                 }
             }
         }
-        // Always switch remote mode OFF again, even if sampling failed.
+        // Always switch remote mode OFF again, even when the ON reply was lost
+        // or sampling failed (the dongle may have switched without telling us).
         let _ = self.race(0x0E, &[0x02, 0xE1, 0x00]);
         analyse_samples(&samples)
     }
@@ -360,6 +360,19 @@ mod tests {
         let got = find_frame(&report, 2, report[1] as usize, m).unwrap();
         assert_eq!(got, ours);
         assert_eq!(got[13] as u32 | (got[14] as u32) << 8, 3950);
+    }
+
+    #[test]
+    fn real_capture_voltage_frame() {
+        // Real YS-Tech (0x0550) reply: [02, len, race frame...], seq 2, group 6.
+        let report = [
+            0x02, 0x11, 0x50, 0x49, 0x01, 0xdc, 0xec, 0x1b, 0x00, 0x00, 0x07, 0x00, 0x06, 0x82, 0x00, 0x99, 0x0f,
+            0x00, 0x00, 0x8d, 0x4a, 0x00, 0x04, 0x00, 0x20, 0x02, 0x01, 0x01,
+        ];
+        let m = |p: &[u8]| p.len() >= 13 && p[10] == 0x06 && p[11] == (0x80 | 2);
+        let f = find_frame(&report, 2, report[1] as usize, m).unwrap();
+        assert_eq!(f[13] as u32 | (f[14] as u32) << 8, 3993);
+        assert_eq!(mv_to_percent(3993), 75);
     }
 
     #[test]
