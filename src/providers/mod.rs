@@ -8,6 +8,7 @@ use hidapi::HidApi;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 
 pub mod asus;
+pub mod razer_barracuda;
 
 /// One source of battery information (a brand, or "Bluetooth", ...).
 pub trait Provider {
@@ -27,7 +28,7 @@ pub trait Provider {
 
 /// All providers, in the order they run. Add your provider here.
 pub fn registry() -> Vec<Box<dyn Provider>> {
-    vec![Box::new(asus::Asus)]
+    vec![Box::new(asus::Asus), Box::new(razer_barracuda::RazerBarracuda::default())]
 }
 
 /// Run one provider and swallow any panic, so one broken provider can never
