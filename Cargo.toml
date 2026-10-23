@@ -2,5 +2,33 @@
 name = "charge-deck"
 version = "0.1.0"
 edition = "2024"
+description = "All your wireless gear's battery on one deck"
+license = "MIT"
+
+[lib]
+name = "charge_deck"
+path = "src/lib.rs"
+
+[[bin]]
+name = "charge-deck"
+path = "src/main.rs"
+
+[[bin]]
+name = "charge-deck-probe"
+path = "src/bin/probe.rs"
 
 [dependencies]
+eframe = "0.37.0"
+hidapi = "2.6.7"
+
+[dependencies.windows]
+version = "0.62.2"
+default-features = false
+features = []
+
+# NOTE: we do NOT use panic = "abort". Each provider runs inside catch_unwind,
+# which only works when panics unwind.
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true
