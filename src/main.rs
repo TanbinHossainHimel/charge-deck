@@ -27,11 +27,13 @@ impl ChargeDeck {
         // Design preview: fake devices, no scanning, no hardware access.
         if let Some(mode) = std::env::var_os("CHARGE_DECK_DEMO") {
             let mut s = shared.lock().unwrap_or_else(|e| e.into_inner());
-            if mode != "empty" {
+            if mode == "2" {
+                s.deck = demo_deck_small();
+            } else if mode != "empty" {
                 s.deck = demo_deck();
             }
             s.last_updated = Some("2:32 PM".into());
-            s.next_scan = Some(Instant::now() + Duration::from_secs(108));
+            s.next_scan = Some(Instant::now() + Duration::from_secs(5 * 60 - 12));
             drop(s);
             let (tx, _rx) = std::sync::mpsc::channel();
             return ChargeDeck { shared, refresh: tx, always_on_top: false };
@@ -64,6 +66,7 @@ fn demo_deck() -> charge_deck::model::Deck {
             dev("mouse", "ROG Keris II Ace", DeviceKind::Mouse, "ASUS receiver", ok(14, false)),
             dev("kb", "ROG Strix Scope II 96 Wireless", DeviceKind::Keyboard, "ASUS receiver", ok(88, true)),
             dev("hs", "Razer Barracuda X", DeviceKind::Headset, "Razer dongle", Status::Ok(est)),
+            dev("old", "ROG Keris Wireless", DeviceKind::Mouse, "ASUS receiver", Status::Ok(Reading::estimated(75, false).with_bars(3, 4))),
             dev("sleepy", "ROG Mouse", DeviceKind::Mouse, "ASUS receiver", ok(66, false)),
             dev("gone", "Old Headset", DeviceKind::Headset, "Razer dongle", ok(40, false)),
         ],
@@ -78,6 +81,13 @@ fn demo_deck() -> charge_deck::model::Deck {
     }
     again.push(dev("bt", "Bluetooth device", DeviceKind::Other, "Bluetooth", Status::Checking));
     deck.apply("demo", again, "2:32 PM");
+    deck
+}
+
+/// `CHARGE_DECK_DEMO=2`: only the states that fit on one screen (charging, bars, asleep, disconnected).
+fn demo_deck_small() -> charge_deck::model::Deck {
+    let mut deck = demo_deck();
+    deck.cards.retain(|c| ["old", "kb", "sleepy", "gone"].contains(&c.device.id.as_str()));
     deck
 }
 
@@ -97,6 +107,13 @@ struct CardView {
     charging: bool,
     asleep: bool,
     edge: Color32,
+    fill: Color32,
+    /// Whole-card opacity (asleep 0.45, disconnected 0.5).
+    opacity: f32,
+    /// Greyscale card: the red icon details turn grey too.
+    grey: bool,
+    /// Still being measured: the bar shows the loading sweep.
+    checking: bool,
     segments: [Color32; 10],
 }
 
@@ -121,11 +138,17 @@ fn view(card: &Card) -> CardView {
         charging: false,
         asleep: false,
         edge: CARD_EDGE,
+        fill: CARD,
+        opacity: 1.0,
+        grey: false,
+        checking: false,
         segments: [SEG_OFF; 10],
     };
 
     if !card.present {
-        // Disconnected this session: grey, with the last reading and time.
+        // Disconnected this session: dimmed and greyscale, with the last reading and time.
+        v.opacity = 0.5;
+        v.grey = true;
         v.status = format!("Last seen {}", card.last_seen);
         if let Some(r) = &card.last_known {
             v.prefix = if r.estimated { "≈" } else { "" };
@@ -143,24 +166,33 @@ fn view(card: &Card) -> CardView {
             v.number = r.percent.to_string();
             v.unit = "%";
             v.color = level_color(r.percent);
-            v.sub = r.voltage_mv.map(|mv| format!("{:.2} V", mv as f32 / 1000.0));
+            // Under the number: the voltage if we know it, else "3 of 4 bars".
+            v.sub = r
+                .voltage_mv
+                .map(|mv| format!("{:.2} V", mv as f32 / 1000.0))
+                .or_else(|| r.bars.map(|(level, of)| format!("{level} of {of} bars")));
             v.charging = r.charging;
             v.segments = lit_segments(r.percent, v.color);
             if r.charging {
+                // Green outline, green-tinted card, filled green CHARGING badge.
                 v.status = "Charging".into();
-                v.status_color = GREEN;
+                v.status_color = BADGE_TEXT;
+                v.edge = GREEN;
+                v.fill = CARD_CHARGING;
             } else if low {
                 v.status = "Low — charge soon".into();
                 v.status_color = LOW;
             } else {
                 v.status = "Connected".into();
             }
-            if low {
+            if low && !r.charging {
                 v.edge = RED;
             }
         }
         Status::Asleep => {
             v.asleep = true;
+            v.opacity = 0.45;
+            v.grey = true;
             v.status = "Asleep / off".into();
             v.sub = card.last_known.as_ref().map(|r| format!("last {}{}%", if r.estimated { "~" } else { "" }, r.percent));
         }
@@ -168,7 +200,7 @@ fn view(card: &Card) -> CardView {
             v.number = "··".into();
             v.color = Color32::from_rgb(0x5B, 0x62, 0x70);
             v.status = "Checking…".into();
-            v.segments = std::array::from_fn(|i| if (3..=5).contains(&i) { SEG_SCAN } else { SEG_OFF });
+            v.checking = true;
         }
     }
     v
@@ -205,8 +237,16 @@ impl eframe::App for ChargeDeck {
         let outline = ui.ctx().layer_painter(egui::LayerId::new(egui::Order::Foreground, egui::Id::NULL.with("outline")));
         outline.rect_stroke(ui.ctx().content_rect(), 0.0, Stroke::new(1.0, CARD_EDGE), egui::StrokeKind::Inside);
 
-        // Keep the "Next scan" countdown ticking; otherwise wake up rarely.
-        let wake = if next_scan.is_some() { Duration::from_secs(1) } else { Duration::from_secs(30) };
+        // Animate (about 30 fps) only while something is loading. Otherwise just keep
+        // the "Next scan" countdown ticking, or wake up rarely.
+        let loading = scanning || cards.iter().any(|c| c.present && matches!(c.device.status, Status::Checking));
+        let wake = if loading {
+            Duration::from_millis(33)
+        } else if next_scan.is_some() {
+            Duration::from_secs(1)
+        } else {
+            Duration::from_secs(30)
+        };
         ui.ctx().request_repaint_after(wake);
     }
 }
@@ -262,7 +302,7 @@ impl ChargeDeck {
             // `cards` is already sorted with disconnected devices last.
             let (live, gone): (Vec<&Card>, Vec<&Card>) = cards.iter().partition(|c| c.present);
             for card in live {
-                draw_card(ui, &view(card));
+                draw_card(ui, &view(card), scanning);
                 ui.add_space(10.0);
             }
             if !gone.is_empty() {
@@ -270,7 +310,7 @@ impl ChargeDeck {
                 tracked(ui, "DISCONNECTED THIS SESSION", display(12.0), MUTED, 2.5);
                 ui.add_space(10.0);
                 for card in gone {
-                    draw_card(ui, &view(card));
+                    draw_card(ui, &view(card), false);
                     ui.add_space(10.0);
                 }
             }
@@ -286,7 +326,7 @@ impl ChargeDeck {
                     (false, None) => "Not scanned yet".to_string(),
                 };
                 ui.label(RichText::new(first).size(12.0).color(TEXT_SOFT));
-                ui.label(RichText::new("Auto-refresh every 2 min").size(12.0).color(MUTED));
+                ui.label(RichText::new("Auto-refresh every 5 min").size(12.0).color(MUTED));
             });
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 // Plain window flag only: no overlay, no drawing inside games.
@@ -326,6 +366,15 @@ impl ChargeDeck {
                 ui.set_max_width(340.0);
                 ui.label(RichText::new(body).size(14.0).color(MUTED));
             });
+            if scanning {
+                // Loading animation while the very first scan runs.
+                ui.add_space(22.0);
+                let time = ui.input(|i| i.time);
+                ui.scope(|ui| {
+                    ui.set_width(260.0);
+                    segment_bar(ui, &sweep(time, [SEG_OFF; 10], Color32::from_rgb(0x8A, 0x92, 0xA0), 1.0));
+                });
+            }
             if !scanning {
                 ui.add_space(22.0);
                 if red_button(ui, "SCAN AGAIN", true, 168.0, 46.0).clicked() {
@@ -460,19 +509,28 @@ fn chip(ui: &mut Ui, text: &str, color: Color32) {
     paint_tracked(ui, rect.min + vec2(8.0, 3.0), &t);
 }
 
-fn draw_card(ui: &mut Ui, v: &CardView) {
+fn draw_card(ui: &mut Ui, v: &CardView, scanning: bool) {
+    let time = ui.input(|i| i.time);
+    // Bar colours: a Checking card shows the grey loading sweep; during a scan the
+    // other live cards get a subtle bright sweep over their real values.
+    let segments = if v.checking {
+        sweep(time, [SEG_OFF; 10], Color32::from_rgb(0x8A, 0x92, 0xA0), 1.0)
+    } else if scanning && v.present && !v.asleep {
+        sweep(time, v.segments, Color32::WHITE, 0.45)
+    } else {
+        v.segments
+    };
     ui.scope(|ui| {
-        if !v.present {
-            ui.set_opacity(0.5);
-        }
-        chamfer_box(ui, Some(v.edge), CARD, 14.0, Margin::symmetric(16, 14), |ui| {
+        ui.set_opacity(v.opacity);
+        chamfer_box(ui, Some(v.edge), v.fill, 14.0, Margin::symmetric(16, 14), |ui| {
             let full = ui.available_width();
             ui.horizontal(|ui| {
                 ui.spacing_mut().item_spacing.x = 14.0;
                 // Icon tile
                 let (tile, _) = ui.allocate_exact_size(vec2(56.0, 56.0), Sense::hover());
                 ui.painter().add(chamfer_shape(tile, 10.0, TILE));
-                icons::device(ui.painter(), Rect::from_center_size(tile.center(), vec2(34.0, 34.0)), Some(v.kind), TEXT_SOFT);
+                let accent = if v.grey { GREY_ACCENT } else { RED };
+                icons::device(ui.painter(), Rect::from_center_size(tile.center(), vec2(34.0, 34.0)), Some(v.kind), TEXT_SOFT, accent);
 
                 // Name, source chip, status
                 ui.vertical(|ui| {
@@ -492,7 +550,7 @@ fn draw_card(ui: &mut Ui, v: &CardView) {
                 });
             });
             ui.add_space(12.0);
-            segment_bar(ui, &v.segments);
+            segment_bar(ui, &segments);
         });
     });
 }
@@ -504,9 +562,17 @@ fn status_line(ui: &mut Ui, v: &CardView) {
     let icon_rect = |ui: &mut Ui, size: f32| ui.allocate_exact_size(vec2(size, size), Sense::hover()).0;
     ui.spacing_mut().item_spacing.x = 5.0;
     if v.charging {
-        let r = icon_rect(ui, 13.0);
-        icons::bolt(ui.painter(), r, v.status_color);
-    } else if v.asleep {
+        // Filled green badge: dark bolt + dark text, chamfered like the chips.
+        let text = layout_tracked(ui, &v.status.to_uppercase(), display(12.0), v.status_color, 0.8);
+        let size = vec2(8.0 + 13.0 + 5.0 + text.size.x + 8.0, text.size.y + 6.0);
+        let (rect, _) = ui.allocate_exact_size(size, Sense::hover());
+        ui.painter().add(chamfer_shape(rect, 5.0, GREEN));
+        let icon = Rect::from_min_size(pos2(rect.min.x + 8.0, rect.center().y - 6.5), vec2(13.0, 13.0));
+        icons::bolt(ui.painter(), icon, v.status_color);
+        paint_tracked(ui, pos2(icon.max.x + 5.0, rect.center().y - text.size.y / 2.0), &text);
+        return;
+    }
+    if v.asleep {
         let r = icon_rect(ui, 13.0);
         icons::moon(ui.painter(), r, v.status_color);
     } else {
@@ -534,7 +600,7 @@ fn number_block(ui: &mut Ui, v: &CardView) {
         x += t.size.x + gap;
     }
     if let Some(sub) = &v.sub {
-        let s = layout_tracked(ui, &sub.to_uppercase(), display(13.0), MUTED, 0.5);
+        let s = layout_tracked(ui, sub, display(13.0), MUTED, 0.5);
         let (r, _) = ui.allocate_exact_size(s.size, Sense::hover());
         // right-align under the number
         paint_tracked(ui, pos2(rect.max.x - s.size.x, r.min.y), &s);

@@ -12,8 +12,8 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 
-/// Gentle polling (rule 8): once every 2 minutes, plus manual refresh.
-pub const REFRESH_EVERY: Duration = Duration::from_secs(120);
+/// Gentle polling (rule 8): once every 5 minutes, plus manual refresh.
+pub const REFRESH_EVERY: Duration = Duration::from_secs(5 * 60);
 
 #[derive(Default)]
 pub struct Shared {

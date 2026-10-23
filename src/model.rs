@@ -22,14 +22,21 @@ pub struct Reading {
     /// Battery voltage in millivolts, if the device told us.
     pub voltage_mv: Option<u32>,
     pub charging: bool,
+    /// For devices that only report levels: (level, out of), e.g. (3, 4).
+    /// The card shows "3 of 4 bars".
+    pub bars: Option<(u8, u8)>,
 }
 
 impl Reading {
     pub fn exact(percent: u8, charging: bool) -> Self {
-        Reading { percent: percent.min(100), estimated: false, voltage_mv: None, charging }
+        Reading { percent: percent.min(100), estimated: false, voltage_mv: None, charging, bars: None }
     }
     pub fn estimated(percent: u8, charging: bool) -> Self {
-        Reading { percent: percent.min(100), estimated: true, voltage_mv: None, charging }
+        Reading { percent: percent.min(100), estimated: true, voltage_mv: None, charging, bars: None }
+    }
+    pub fn with_bars(mut self, level: u8, out_of: u8) -> Self {
+        self.bars = Some((level, out_of));
+        self
     }
 }
 

@@ -11,7 +11,7 @@ Lowest battery first, so you see what needs charging at a glance.
 - One card per device: icon, name, battery %, colour bar (green > 50 %, yellow 20–50 %, red < 20 %), source and status.
 - `≈` in front of a % means "estimated" (from voltage or a few bars). The voltage is shown too.
 - Devices that disappear stay on the list, greyed out, with "Last seen HH:MM".
-- Refreshes every 2 minutes, plus a **Refresh** button. Optional **Always on top**.
+- Refreshes every 5 minutes, plus a **Refresh** button. Optional **Always on top**.
 - Runs as a normal user. No driver, no service, no network.
 
 ## The honest truth: there is no universal way
@@ -92,6 +92,7 @@ touches any device:
 
 ```
 set CHARGE_DECK_DEMO=1        & target\release\charge-deck.exe
+set CHARGE_DECK_DEMO=2        & target\release\charge-deck.exe   (fewer cards: charging, bars, asleep, disconnected)
 set CHARGE_DECK_DEMO=empty    & target\release\charge-deck.exe
 ```
 
@@ -109,7 +110,7 @@ Charge Deck was designed to stay far away from everything anti-cheat looks for:
 - **No input reading or faking.** No keyboard/mouse hooks, no raw input, no `SendInput`, no macros. It never sees your keypresses or mouse movement.
 - **Never opens input collections.** It refuses HID usage page `0x01` (keyboard/mouse/gamepad). It only opens vendor collections (`0xFF00+`) and battery/power collections.
 - **Read-only.** It only asks "what's your battery?". It never changes DPI, lighting, key mapping or firmware.
-- **Gentle.** One quick check every 2 minutes; it opens a device, asks, and closes it.
+- **Gentle.** One quick check every 5 minutes; it opens a device, asks, and closes it.
 - **No overlay.** "Always on top" is a plain window flag. Nothing is drawn inside games.
 - **No network, no telemetry, no packing or obfuscation.**
 

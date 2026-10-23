@@ -1,7 +1,6 @@
 //! Line-art icons from the design, painted with code (no image files, no SVG
 //! library). Every icon is drawn on a 24x24 grid scaled into the given rect.
 
-use crate::theme::RED;
 use charge_deck::model::DeviceKind;
 use eframe::egui::{self, Color32, CornerRadius, Painter, Pos2, Rect, Shape, Stroke, StrokeKind, pos2};
 
@@ -44,10 +43,10 @@ impl Grid {
 }
 
 /// Device icon: body in `fg`, small details in the brand red.
-pub fn device(painter: &Painter, rect: Rect, kind: Option<DeviceKind>, fg: Color32) {
+pub fn device(painter: &Painter, rect: Rect, kind: Option<DeviceKind>, fg: Color32, accent: Color32) {
     let g = Grid::new(rect);
     let s = g.stroke(1.4, fg);
-    let red = g.stroke(1.6, RED);
+    let red = g.stroke(1.6, accent);
     match kind {
         Some(DeviceKind::Keyboard) => {
             painter.rect_stroke(g.rect(1.5, 6.0, 22.5, 17.0), g.radius(2.0), s, StrokeKind::Middle);
@@ -68,8 +67,8 @@ pub fn device(painter: &Painter, rect: Rect, kind: Option<DeviceKind>, fg: Color
             g.line(painter, &[(6.1, 9.6), (17.9, 9.6)], s);
             g.line(painter, &[(4.6, 10.8), (4.6, 12.9)], s);
             g.line(painter, &[(4.6, 14.3), (4.6, 15.9)], s);
-            painter.rect_stroke(g.rect(11.0, 4.4, 13.0, 7.8), g.radius(1.0), g.stroke(1.4, RED), StrokeKind::Middle);
-            g.line(painter, &[(10.4, 16.4), (12.0, 14.8), (13.6, 16.4)], g.stroke(1.4, RED));
+            painter.rect_stroke(g.rect(11.0, 4.4, 13.0, 7.8), g.radius(1.0), g.stroke(1.4, accent), StrokeKind::Middle);
+            g.line(painter, &[(10.4, 16.4), (12.0, 14.8), (13.6, 16.4)], g.stroke(1.4, accent));
         }
         Some(DeviceKind::Headset) => {
             let mut band = vec![(4.4, 13.0)];
@@ -89,7 +88,7 @@ pub fn device(painter: &Painter, rect: Rect, kind: Option<DeviceKind>, fg: Color
             g.line(painter, &[(4.9, 11.5), (8.3, 11.5)], s);
             g.line(painter, &[(11.0, 9.2), (13.0, 9.2)], red);
             for (x, y) in [(16.2, 10.4), (18.4, 12.6), (16.2, 12.6), (18.4, 10.4)] {
-                painter.circle_filled(g.p(x, y), 1.1 * g.scale, RED);
+                painter.circle_filled(g.p(x, y), 1.1 * g.scale, accent);
             }
         }
         // Other / Bluetooth-style rune, in the accent colour.
@@ -97,7 +96,7 @@ pub fn device(painter: &Painter, rect: Rect, kind: Option<DeviceKind>, fg: Color
             g.line(
                 painter,
                 &[(7.0, 7.0), (17.0, 17.0), (12.0, 22.0), (12.0, 2.0), (17.0, 7.0), (7.0, 17.0)],
-                g.stroke(1.5, RED),
+                g.stroke(1.5, accent),
             );
         }
     }

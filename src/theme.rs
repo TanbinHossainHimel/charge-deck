@@ -14,11 +14,13 @@ pub const BAR_BG: Color32 = Color32::from_rgb(0x05, 0x06, 0x07); // title bar + 
 pub const BAR_LINE: Color32 = Color32::from_rgb(0x1A, 0x1D, 0x22);
 pub const CARD: Color32 = Color32::from_rgb(0x10, 0x12, 0x16);
 pub const CARD_EDGE: Color32 = Color32::from_rgb(0x22, 0x26, 0x2D);
+pub const CARD_CHARGING: Color32 = Color32::from_rgb(0x0E, 0x1A, 0x13); // green-tinted card
+pub const BADGE_TEXT: Color32 = Color32::from_rgb(0x06, 0x14, 0x0C); // dark text on the green badge
+pub const GREY_ACCENT: Color32 = Color32::from_rgb(110, 110, 110); // the red icon details, greyscaled
 pub const TILE: Color32 = Color32::from_rgb(0x18, 0x1B, 0x21);
 pub const CHIP: Color32 = Color32::from_rgb(0x1A, 0x1D, 0x23);
 pub const CHIP_TEXT: Color32 = Color32::from_rgb(0xB4, 0xBA, 0xC4);
 pub const SEG_OFF: Color32 = Color32::from_rgb(0x1E, 0x22, 0x28);
-pub const SEG_SCAN: Color32 = Color32::from_rgb(0x3A, 0x3F, 0x48);
 pub const SEG_GREY: Color32 = Color32::from_rgb(0x4A, 0x50, 0x5A);
 pub const STAT_TOP: Color32 = Color32::from_rgb(0x2A, 0x2F, 0x37);
 pub const TEXT: Color32 = Color32::from_rgb(0xF2, 0xF3, 0xF5);
@@ -164,6 +166,16 @@ pub fn chamfer_box(
     shapes.push(chamfer_shape(body, (cut - 0.5).max(0.0), fill));
     ui.painter().set(idx, Shape::Vec(shapes));
     rect
+}
+
+/// Loading animation: a bright patch of ~3 segments sweeps left to right over
+/// `base` (one pass every 2 s). `strength` 1.0 = fully `peak`, lower = subtle.
+pub fn sweep(time: f64, base: [Color32; 10], peak: Color32, strength: f32) -> [Color32; 10] {
+    let pos = ((time * 7.0) % 14.0) as f32 - 2.0; // starts off the left edge, ends off the right
+    std::array::from_fn(|i| {
+        let k = (1.0 - (i as f32 - pos).abs() / 2.5).max(0.0) * strength;
+        base[i].lerp_to_gamma(peak, k)
+    })
 }
 
 /// The slanted 10-segment battery bar. `colors` has one colour per segment.

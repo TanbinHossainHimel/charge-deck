@@ -279,12 +279,12 @@ impl Provider for RazerBarracuda {
                 let reading = if charging {
                     // Voltage is inflated by the charger, so keep the old %.
                     match self.last_percent {
-                        Some(p) => Reading { percent: p, estimated: true, voltage_mv: Some(mv), charging: true },
-                        None => Reading { percent: pct, estimated: true, voltage_mv: Some(mv), charging: true },
+                        Some(p) => Reading { percent: p, estimated: true, voltage_mv: Some(mv), charging: true, bars: None },
+                        None => Reading { percent: pct, estimated: true, voltage_mv: Some(mv), charging: true, bars: None },
                     }
                 } else {
                     self.last_percent = Some(pct);
-                    Reading { percent: pct, estimated: true, voltage_mv: Some(mv), charging: false }
+                    Reading { percent: pct, estimated: true, voltage_mv: Some(mv), charging: false, bars: None }
                 };
                 return vec![card(info.product_id(), Status::Ok(reading))];
             }

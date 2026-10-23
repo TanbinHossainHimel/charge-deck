@@ -88,7 +88,8 @@ fn to_status(raw: Raw, level_scale: bool) -> Status {
     }
     if level_scale {
         // 1..=4 levels -> 25..100 %, shown as approximate.
-        Status::Ok(Reading::estimated((raw.value.min(4)) * 25, raw.charging))
+        let level = raw.value.min(4);
+        Status::Ok(Reading::estimated(level * 25, raw.charging).with_bars(level, 4))
     } else {
         Status::Ok(Reading::exact(raw.value, raw.charging))
     }
@@ -259,6 +260,6 @@ mod tests {
         assert!(uses_level_scale("ROG Keris Wireless"));
         assert!(!uses_level_scale("ROG Keris II Ace"));
         let st = to_status(Raw { value: 3, charging: false }, true);
-        assert_eq!(st, Status::Ok(Reading::estimated(75, false)));
+        assert_eq!(st, Status::Ok(Reading::estimated(75, false).with_bars(3, 4)));
     }
 }

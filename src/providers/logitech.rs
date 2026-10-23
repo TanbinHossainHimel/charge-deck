@@ -278,6 +278,7 @@ impl Provider for Logitech {
                         estimated: b.estimated,
                         voltage_mv: b.voltage_mv,
                         charging: b.charging,
+                        bars: None,
                     }),
                 });
             }
