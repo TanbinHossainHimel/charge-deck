@@ -10,6 +10,7 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 pub mod asus;
 pub mod bluetooth;
 pub mod controllers;
+pub mod logitech;
 pub mod razer_barracuda;
 pub mod razer_mouse;
 
@@ -36,6 +37,7 @@ pub fn registry() -> Vec<Box<dyn Provider>> {
         Box::new(asus::Asus),
         Box::new(razer_barracuda::RazerBarracuda::default()),
         Box::new(razer_mouse::RazerMouse),
+        Box::new(logitech::Logitech),
         Box::new(bluetooth::Bluetooth),
         Box::new(controllers::Controllers::default()),
     ]
