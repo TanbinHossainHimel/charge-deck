@@ -40,8 +40,9 @@ It is not a virus detection. It is just "we don't know this publisher yet". Righ
 is **unsigned**, so every user sees it once and has to click **More info → Run anyway**. INSTALL.md
 tells them so.
 
-The release workflow is already prepared for **SignPath Foundation** signing and for **winget**.
-The steps that only you can do (applying, creating tokens) are in **[SIGNING.md](SIGNING.md)**.
+The current plan is to publish on **winget** (`winget install AimersLab.ChargeDeck`). The steps that
+only you can do are in **[SIGNING.md](SIGNING.md)**. The release workflow is also prepared for
+**SignPath Foundation** signing, which is parked for now (it stays off until its settings are added).
 
 Other ways to improve this (each involves an application or a cost, so it is your decision):
 

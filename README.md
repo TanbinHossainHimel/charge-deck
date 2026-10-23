@@ -139,14 +139,13 @@ the claims above — the rules are enforced in `src/hid_util.rs` and listed in `
 
 ## Code signing policy
 
-**Status:** release installers are **not signed yet**, so Windows SmartScreen shows "Unknown publisher"
-(see [INSTALL.md](INSTALL.md) for what to click). The plan is free code signing for open-source projects
-from SignPath Foundation. Setup is described in [SIGNING.md](SIGNING.md). Every release lists a SHA-256
-checksum so you can check that your download is intact.
+**Status:** release installers are **not code-signed**, so Windows SmartScreen shows "Unknown publisher"
+when you run an installer downloaded in a browser (see [INSTALL.md](INSTALL.md) for what to click).
+Every release lists a SHA-256 checksum so you can check that your download is intact.
+Publishing on winget is described in [SIGNING.md](SIGNING.md).
 
 - **Where releases come from:** only the automated build in this repository
   (`.github/workflows/release.yml`), built from the checked-in source on GitHub's own servers.
-- **Who approves a release:** the repository owner, [TanbinHossainHimel](https://github.com/TanbinHossainHimel).
 - **Privacy:** this program will not transfer any information to other networked systems unless
   specifically requested by the user or the person installing or operating it. (Charge Deck makes no
   network connections at all.)
