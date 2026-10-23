@@ -17,7 +17,7 @@ Lowest battery first, so you see what needs charging at a glance.
 ## Download and install
 
 1. Download **`ChargeDeck-Setup-<version>.exe`** from the project's **Releases** page.
-2. Double-click it and click **Next → Next → Install → Finish**.
+2. Double-click it and click **Next** (three times), then **Install** and **Finish**.
 
 That's it: no admin rights, no driver, no service. Windows may show a blue "Windows protected your PC"
 box because the installer isn't code-signed yet: click **More info → Run anyway**.

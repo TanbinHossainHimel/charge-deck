@@ -624,7 +624,13 @@ fn main() -> eframe::Result {
         // The design draws its own title bar, so no native one.
         .with_decorations(false)
         .with_inner_size([480.0, 800.0])
-        .with_min_inner_size([380.0, 460.0]);
+        .with_min_inner_size([380.0, 460.0])
+        // Our logo in the taskbar and Alt-Tab (instead of eframe's default icon).
+        .with_icon(egui::IconData {
+            rgba: include_bytes!("../assets/icon-64.rgba").to_vec(),
+            width: 64,
+            height: 64,
+        });
     if std::env::var_os("CHARGE_DECK_DEMO").is_some() {
         // Taller window so all demo cards are visible at once.
         viewport = viewport.with_inner_size([480.0, 1040.0]).with_position([20.0, 0.0]);

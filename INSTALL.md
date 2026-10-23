@@ -31,30 +31,32 @@ Double-click the file you downloaded.
 
 ### 3. Click through the wizard
 
-| Step | What you see | What to do |
-|---|---|---|
-| 1 | **Welcome to the Charge Deck Setup Wizard** | Click **Next** |
-| 2 | **License Agreement** (MIT license) | Choose *I accept the agreement*, click **Next** |
-| 3 | **Select Additional Tasks** | Optional boxes: *Create a desktop shortcut* and *Start Charge Deck when I sign in to Windows*. Click **Next** |
-| 4 | **Ready to Install** | Click **Install** (takes a few seconds) |
-| 5 | **Completing the Charge Deck Setup Wizard** | Leave *Launch Charge Deck* ticked, click **Finish** |
+| Step | What you see                                | What to do                                                                                                    |
+|------|---------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| 1    | **Welcome to the Charge Deck Setup Wizard** | Click **Next**                                                                                                |
+| 2    | **License Agreement** (MIT license)         | Choose *I accept the agreement*, click **Next**                                                               |
+| 3    | **Select Additional Tasks**                 | Optional boxes: *Create a desktop shortcut* and *Start Charge Deck when I sign in to Windows*. Click **Next** |
+| 4    | **Ready to Install**                        | Click **Install** (takes a few seconds)                                                                       |
+| 5    | **Completing the Charge Deck Setup Wizard** | Leave *Launch Charge Deck* ticked, click **Finish**                                                           |
 
 Charge Deck opens, and one card appears for each device it finds after about 10 seconds.
 You can also start it any time from the **Start menu → Charge Deck**.
 
 Where it goes: `C:\Users\<you>\AppData\Local\Programs\Charge Deck` (only for your Windows account,
-which is why no administrator password is asked).
+which is why no administrator password is asked). The wizard doesn't ask for a folder; advanced users can
+choose one with `/DIR="D:\Apps\ChargeDeck"` (see *Quiet install* below).
 
 ### Updating
 
 Download the newer `ChargeDeck-Setup-…exe` and run it. It replaces the old version and keeps your
-shortcuts. If Charge Deck is open, the wizard offers to close it.
+shortcuts. If Charge Deck is open, the installer closes it for you and installs over it (Charge Deck
+keeps no settings, so nothing is lost). Uninstalling does the same.
 
 ### Uninstalling
 
-**Settings → Apps → Installed apps → Charge Deck → Uninstall**
-(or **Start menu → Charge Deck → Uninstall**). This removes the program, its shortcuts and the
-start-with-Windows entry. Charge Deck keeps no settings or other files, so nothing is left behind.
+**Settings → Apps → Installed apps → Charge Deck → Uninstall.** This removes the program, its
+shortcuts and the start-with-Windows entry. Charge Deck keeps no settings or other files, so nothing is
+left behind.
 
 ### Quiet install (for advanced users and IT)
 
@@ -89,14 +91,14 @@ never talks to them.
 
 ## Troubleshooting
 
-| Problem | Fix |
-|---|---|
-| Windows says "protected your PC" | Click **More info → Run anyway**. The installer isn't signed yet (see above). |
-| Antivirus blocks or deletes the installer | New unsigned programs sometimes trigger this. Check the SHA-256 (step 1), then allow the file. Charge Deck never touches other programs, never reads input and never uses the network (see *Is it safe with anti-cheat?* in the README). |
-| The window doesn't open, or is blank | Update your graphics driver. The app draws with DirectX 12 or Vulkan, which almost every PC from the last decade supports. |
-| A device shows wrong or missing values | Close **Armoury Crate / Razer Synapse / Logitech G HUB**, they can compete for the dongle. Then press **Refresh**. |
-| Razer headset stops answering after charging | Switch the headset off and on again. |
-| Razer or Logitech mouse not found | Those providers are untested and only use vendor HID collections. Run the probe and open a GitHub issue. |
+| Problem                                      | Fix                                                                                                                                                                                                                                      |
+|----------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Windows says "protected your PC"             | Click **More info → Run anyway**. The installer isn't signed yet (see above).                                                                                                                                                            |
+| Antivirus blocks or deletes the installer    | New unsigned programs sometimes trigger this. Check the SHA-256 (step 1), then allow the file. Charge Deck never touches other programs, never reads input and never uses the network (see *Is it safe with anti-cheat?* in the README). |
+| The window doesn't open, or is blank         | Update your graphics driver. The app draws with DirectX 12 or Vulkan, which almost every PC from the last decade supports.                                                                                                               |
+| A device shows wrong or missing values       | Close **Armoury Crate / Razer Synapse / Logitech G HUB**, they can compete for the dongle. Then press **Refresh**.                                                                                                                       |
+| Razer headset stops answering after charging | Switch the headset off and on again.                                                                                                                                                                                                     |
+| Razer or Logitech mouse not found            | Those providers are untested and only use vendor HID collections. Run the probe and open a GitHub issue.                                                                                                                                 |
 
 ---
 
@@ -140,11 +142,11 @@ The wizard is written to `dist\ChargeDeck-Setup-<version>.exe`.
 
 ### Build troubleshooting
 
-| Problem | Fix |
-|---|---|
-| `linker 'link.exe' not found` | The C++ Build Tools are missing or half-installed. Redo step 1, then open a **new** terminal. |
-| `cargo` is not recognized | Close the terminal and open a new one. In **Git Bash**, add Rust once: `echo 'export PATH="$PATH:$HOME/.cargo/bin"' >> ~/.bashrc`. |
-| Build says the edition isn't supported | Your Rust is too old. Run `rustup update`. |
+| Problem                                | Fix                                                                                                                                |
+|----------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| `linker 'link.exe' not found`          | The C++ Build Tools are missing or half-installed. Redo step 1, then open a **new** terminal.                                      |
+| `cargo` is not recognized              | Close the terminal and open a new one. In **Git Bash**, add Rust once: `echo 'export PATH="$PATH:$HOME/.cargo/bin"' >> ~/.bashrc`. |
+| Build says the edition isn't supported | Your Rust is too old. Run `rustup update`.                                                                                         |
 
 ---
 

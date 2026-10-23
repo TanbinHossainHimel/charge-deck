@@ -42,10 +42,10 @@ tells them so.
 
 Ways to improve this later (each involves an application or a cost, so it is your decision):
 
-| Option | Notes |
-|---|---|
-| **SignPath Foundation** | Free code signing for open-source projects. You apply, and signing runs from the GitHub workflow. |
-| **Azure Trusted Signing** | Microsoft's low-cost signing service, billed monthly. |
+| Option                                | Notes                                                                                                 |
+|---------------------------------------|-------------------------------------------------------------------------------------------------------|
+| **SignPath Foundation**               | Free code signing for open-source projects. You apply, and signing runs from the GitHub workflow.     |
+| **Azure Trusted Signing**             | Microsoft's low-cost signing service, billed monthly.                                                 |
 | **A normal code-signing certificate** | Paid yearly. An *EV* certificate gives instant SmartScreen trust; others need reputation to build up. |
 
 Signing the installer (and the `.exe` inside it) removes the "unknown publisher" wording at once.

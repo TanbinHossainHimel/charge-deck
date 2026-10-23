@@ -26,7 +26,8 @@ VersionInfoDescription={#AppName} setup
 PrivilegesRequired=lowest
 DefaultDirName={autopf}\{#AppName}
 DisableProgramGroupPage=yes
-DisableDirPage=auto
+; Fewer clicks: no "choose a folder" page. /DIR="..." on the command line still works.
+DisableDirPage=yes
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0
@@ -45,8 +46,10 @@ OutputBaseFilename=ChargeDeck-Setup-{#AppVersion}
 Compression=lzma2
 SolidCompression=yes
 
-; Upgrading while the app runs: ask it to close instead of failing on a locked exe.
-CloseApplications=yes
+; A running Charge Deck would lock its .exe, so the [Code] section below closes it
+; just before files are replaced or removed. (The built-in "close applications"
+; helper is off: it aborts silent installs when the app doesn't answer it.)
+CloseApplications=no
 RestartApplications=no
 
 [Languages]
@@ -71,3 +74,29 @@ Name: "{userstartup}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: startup
 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "Launch {#AppName}"; Flags: nowait postinstall skipifsilent
+
+[Code]
+// Charge Deck keeps no settings or other state, so closing it is harmless.
+// Only our own two programs are closed, by exact file name.
+procedure StopChargeDeck();
+var
+  ResultCode: Integer;
+begin
+  Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /IM charge-deck.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /IM charge-deck-probe.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Sleep(700);
+end;
+
+// Runs after the user clicked Install, right before files are copied.
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+begin
+  StopChargeDeck();
+  Result := '';
+end;
+
+// Runs when the uninstaller starts.
+function InitializeUninstall(): Boolean;
+begin
+  StopChargeDeck();
+  Result := True;
+end;

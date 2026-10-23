@@ -45,6 +45,18 @@ $pngs = @{}
 foreach ($s in $sizes) { $pngs[$s] = New-LogoPng $s }
 
 New-Item -ItemType Directory -Force assets | Out-Null
+
+# Raw 64x64 RGBA pixels (4 bytes per pixel) for the running window's icon
+# (taskbar, Alt-Tab). eframe takes raw pixels, so no image decoder is needed in the app.
+$ms64 = New-Object System.IO.MemoryStream (, $pngs[64])
+$bmp64 = New-Object System.Drawing.Bitmap $ms64
+$raw = New-Object byte[] (64 * 64 * 4)
+for ($y = 0; $y -lt 64; $y++) { for ($x = 0; $x -lt 64; $x++) {
+    $c = $bmp64.GetPixel($x, $y); $i = ($y * 64 + $x) * 4
+    $raw[$i] = $c.R; $raw[$i + 1] = $c.G; $raw[$i + 2] = $c.B; $raw[$i + 3] = $c.A
+} }
+[System.IO.File]::WriteAllBytes((Join-Path (Get-Location) "assets\icon-64.rgba"), $raw)
+$bmp64.Dispose()
 [System.IO.File]::WriteAllBytes((Join-Path (Get-Location) "assets\icon-256.png"), $pngs[256])
 
 # ICO container with PNG images inside (supported since Windows Vista).
