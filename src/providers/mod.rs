@@ -11,10 +11,12 @@ pub mod asus;
 pub mod bluetooth;
 pub mod controllers;
 pub mod razer_barracuda;
+pub mod razer_mouse;
 
 /// One source of battery information (a brand, or "Bluetooth", ...).
 pub trait Provider {
-    /// Short name shown on cards, e.g. "ASUS receiver".
+    /// Short unique name of the provider, e.g. "ASUS receiver". It must be
+    /// different for every provider (the deck uses it to track missing devices).
     fn name(&self) -> &'static str;
 
     /// Find this provider's devices and read their batteries.
@@ -33,6 +35,7 @@ pub fn registry() -> Vec<Box<dyn Provider>> {
     vec![
         Box::new(asus::Asus),
         Box::new(razer_barracuda::RazerBarracuda::default()),
+        Box::new(razer_mouse::RazerMouse),
         Box::new(bluetooth::Bluetooth),
         Box::new(controllers::Controllers::default()),
     ]
@@ -56,6 +59,15 @@ mod tests {
         fn scan(&mut self, _hid: &HidApi) -> Vec<DeviceBattery> {
             panic!("provider bug");
         }
+    }
+
+    #[test]
+    fn provider_names_are_unique() {
+        let names: Vec<_> = registry().iter().map(|p| p.name()).collect();
+        let mut sorted = names.clone();
+        sorted.sort();
+        sorted.dedup();
+        assert_eq!(names.len(), sorted.len(), "duplicate provider name in {names:?}");
     }
 
     #[test]

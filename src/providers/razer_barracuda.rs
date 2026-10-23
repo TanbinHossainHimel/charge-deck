@@ -256,8 +256,9 @@ impl RazerBarracuda {
 }
 
 impl Provider for RazerBarracuda {
+    /// Unique per provider (the deck tracks "device went missing" by this name).
     fn name(&self) -> &'static str {
-        SOURCE
+        "Razer Barracuda"
     }
 
     fn claims(&self, info: &DeviceInfo) -> bool {
