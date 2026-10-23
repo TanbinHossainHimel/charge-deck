@@ -73,6 +73,18 @@ fn main() {
         );
     }
 
+    // Read-only: only reads the Windows device list, talks to nothing.
+    println!("\n== Bluetooth devices known to Windows ==");
+    for enumerator in ["BTHENUM", "BTHLE"] {
+        for d in charge_deck::providers::bluetooth::enumerate(Some(enumerator)) {
+            if d.name.is_empty() {
+                continue;
+            }
+            let battery = d.battery.map(|b| format!("battery {b}%")).unwrap_or_else(|| "no battery value".into());
+            println!("{} | {} | {}", d.name, battery, d.instance_id);
+        }
+    }
+
     if verbose {
         set_verbose(true);
         println!("\n== Running providers (> sent, < received) ==");
