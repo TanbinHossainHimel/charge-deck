@@ -28,17 +28,17 @@ Charge Deck works in **three layers**:
 
 ## Supported devices
 
-| Device | Connection | Status |
-|---|---|---|
-| ROG Strix Scope II 96 Wireless (keyboard) | ASUS ROG Omni Receiver | ✅ tested |
-| ROG Keris II Ace (mouse) | ASUS ROG Omni Receiver | ✅ tested |
-| Razer Barracuda X (2022) headset | Razer 2.4 GHz dongle `1532:0550` | ✅ tested |
-| Bluetooth devices with a Windows battery value | Bluetooth | ✅ tested (one headset) |
-| Xbox / PlayStation / other controllers | Windows | ⚠️ untested — please report |
-| Razer Barracuda X (2022) | Razer dongle `1532:0552` | ⚠️ untested — please report |
-| Other ASUS ROG mice (classic receiver / cable) | ASUS | ⚠️ untested — please report |
-| Razer wireless mice (Viper, DeathAdder, Basilisk, …) | Razer dongle | ⚠️ untested — please report |
-| Logitech Lightspeed / Bolt / Unifying devices | Logitech receiver | ⚠️ untested — please report |
+| Device                                               | Connection                       | Status                      |
+|------------------------------------------------------|----------------------------------|-----------------------------|
+| ROG Strix Scope II 96 Wireless (keyboard)            | ASUS ROG Omni Receiver           | ✅ tested                   |
+| ROG Keris II Ace (mouse)                             | ASUS ROG Omni Receiver           | ✅ tested                   |
+| Razer Barracuda X (2022) headset                     | Razer 2.4 GHz dongle `1532:0550` | ✅ tested                   |
+| Bluetooth devices with a Windows battery value       | Bluetooth                        | ✅ tested (one headset)     |
+| Xbox / PlayStation / other controllers               | Windows                          | ⚠️ untested — please report |
+| Razer Barracuda X (2022)                             | Razer dongle `1532:0552`         | ⚠️ untested — please report |
+| Other ASUS ROG mice (classic receiver / cable)       | ASUS                             | ⚠️ untested — please report |
+| Razer wireless mice (Viper, DeathAdder, Basilisk, …) | Razer dongle                     | ⚠️ untested — please report |
+| Logitech Lightspeed / Bolt / Unifying devices        | Logitech receiver                | ⚠️ untested — please report |
 
 **Wanted** (not implemented, we don't guess protocols): SteelSeries, HyperX,
 Corsair, Glorious, Pulsar and others. Want yours? See CONTRIBUTING.md.
