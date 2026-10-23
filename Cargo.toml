@@ -24,7 +24,8 @@ hidapi = "2.6.7"
 [dependencies.windows]
 version = "0.62.2"
 default-features = false
-features = []
+# Only what we use. Add features here as providers need them.
+features = ["Win32_Foundation", "Win32_System_SystemInformation"]
 
 # NOTE: we do NOT use panic = "abort". Each provider runs inside catch_unwind,
 # which only works when panics unwind.

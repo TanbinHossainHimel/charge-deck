@@ -64,6 +64,8 @@ pub struct Card {
     pub present: bool,
     /// "HH:MM" of the last scan that saw the device.
     pub last_seen: String,
+    /// Last real reading, so an asleep device can still show "last 66 %".
+    pub last_known: Option<Reading>,
 }
 
 /// All cards of the session.
@@ -82,13 +84,26 @@ impl Deck {
             card.present = false;
         }
         for dev in found {
+            let known = match &dev.status {
+                Status::Ok(r) => Some(r.clone()),
+                _ => None,
+            };
             if let Some(card) = self.cards.iter_mut().find(|c| c.device.id == dev.id) {
                 card.device = dev;
                 card.provider = provider;
                 card.present = true;
                 card.last_seen = now.to_string();
+                if known.is_some() {
+                    card.last_known = known;
+                }
             } else {
-                self.cards.push(Card { device: dev, provider, present: true, last_seen: now.to_string() });
+                self.cards.push(Card {
+                    device: dev,
+                    provider,
+                    present: true,
+                    last_seen: now.to_string(),
+                    last_known: known,
+                });
             }
         }
     }
