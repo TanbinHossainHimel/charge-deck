@@ -1,4 +1,5 @@
-# Builds the Windows setup wizard and attaches it to a GitHub Release.
+# Builds the Windows setup wizard, signs it (when SignPath is configured) and
+# attaches it to a GitHub Release. Optionally sends the new version to winget.
 #
 # How to publish a new version:
 #   1. Change `version` in Cargo.toml (for example to 0.2.0) and commit.
@@ -9,9 +10,14 @@
 # Every run (also manual ones from the Actions tab) uploads the installer as a
 # workflow artifact, so you can test a build without publishing it.
 #
-# NOTE: written without being able to run it on GitHub yet. If a step fails the
-# first time, the log will say which; the local script installer\build-installer.ps1
-# does the same thing and was tested.
+# CODE SIGNING (SignPath Foundation, see SIGNING.md). It switches on by itself
+# once these exist in  Settings -> Secrets and variables -> Actions:
+#   Variables: SIGNPATH_ORGANIZATION_ID, SIGNPATH_PROJECT_SLUG, SIGNPATH_SIGNING_POLICY_SLUG
+#   Secret:    SIGNPATH_API_TOKEN
+# Without them the installer is built unsigned, as before.
+#
+# WINGET (see SIGNING.md). The last job runs only when the secret WINGET_TOKEN
+# exists, and only after the package AimersLab.ChargeDeck was accepted into winget once.
 name: Release
 
 on:
@@ -25,8 +31,10 @@ permissions:
 jobs:
   windows-installer:
     runs-on: windows-latest
+    env:
+      SIGNPATH_CONFIGURED: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' && secrets.SIGNPATH_API_TOKEN != '' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -53,8 +61,46 @@ jobs:
         shell: pwsh
         run: ./installer/build-installer.ps1
 
+      # ---- Code signing with SignPath (skipped when not configured) ----
+      # SignPath checks that the file really comes from this repository's build,
+      # so the unsigned installer must be handed over as a workflow artifact.
+      - name: Upload the unsigned installer (for SignPath)
+        id: unsigned
+        if: env.SIGNPATH_CONFIGURED == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: unsigned-installer
+          path: dist/ChargeDeck-Setup-*.exe
+
+      - name: Sign it with SignPath
+        if: env.SIGNPATH_CONFIGURED == 'true'
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          # A release signing policy may wait for a human approval in SignPath.
+          wait-for-completion-timeout-in-seconds: 7200
+          output-artifact-directory: signed
+
+      - name: Use the signed installer and refresh its checksum
+        if: env.SIGNPATH_CONFIGURED == 'true'
+        shell: pwsh
+        run: |
+          $signed = Get-ChildItem signed -Filter "ChargeDeck-Setup-*.exe" -Recurse | Select-Object -First 1
+          if (-not $signed) { throw "SignPath returned no installer" }
+          $sig = Get-AuthenticodeSignature $signed.FullName
+          if ($sig.Status -ne "Valid") { throw "Installer signature is $($sig.Status), not Valid" }
+          "Signed by: $($sig.SignerCertificate.Subject)"
+          Copy-Item $signed.FullName "dist\$($signed.Name)" -Force
+          $hash = (Get-FileHash "dist\$($signed.Name)" -Algorithm SHA256).Hash.ToLower()
+          "$hash  $($signed.Name)" | Set-Content -Encoding ascii "dist\$($signed.Name).sha256"
+
       - name: Keep the installer as a workflow artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ChargeDeck-Setup
           path: |
@@ -63,9 +109,32 @@ jobs:
 
       - name: Attach it to the GitHub release
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             dist/*.exe
             dist/*.sha256
           generate_release_notes: true
+
+  # Sends the new version to winget (Microsoft's package manager), so people can run
+  #   winget install AimersLab.ChargeDeck
+  # Runs only on tags, only when the secret WINGET_TOKEN exists. Needs the package to
+  # exist in winget-pkgs already (first submission is manual, see SIGNING.md).
+  winget:
+    needs: windows-installer
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: windows-latest
+    env:
+      WINGET_TOKEN_SET: ${{ secrets.WINGET_TOKEN != '' }}
+    steps:
+      - name: Open a pull request in winget-pkgs
+        if: env.WINGET_TOKEN_SET == 'true'
+        shell: pwsh
+        env:
+          WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          $url = "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/ChargeDeck-Setup-$version.exe"
+          # wingetcreate is Microsoft's official tool for this.
+          Invoke-WebRequest https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
+          ./wingetcreate.exe update AimersLab.ChargeDeck --version $version --urls $url --submit --token $env:WINGET_TOKEN

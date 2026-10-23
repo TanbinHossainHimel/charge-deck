@@ -18,7 +18,10 @@ AppId={{6A5CC729-4844-4A81-87F3-B63164685904}
 AppName={#AppName}
 AppVersion={#AppVersion}
 AppVerName={#AppName} {#AppVersion}
-AppPublisher=Charge Deck contributors
+AppPublisher=Aimers Lab
+AppPublisherURL=https://aimers-lab.com
+AppSupportURL=https://github.com/TanbinHossainHimel/charge-deck/issues
+AppUpdatesURL=https://github.com/TanbinHossainHimel/charge-deck/releases
 VersionInfoVersion={#AppVersion}
 VersionInfoDescription={#AppName} setup
 
