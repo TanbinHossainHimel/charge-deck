@@ -44,3 +44,6 @@ features = [
 opt-level = "s"
 lto = true
 strip = true
+
+[build-dependencies]
+winresource = "0.1.34"
