@@ -122,6 +122,13 @@ pub fn tracked(ui: &mut Ui, text: &str, font: FontId, color: Color32, tracking: 
     resp
 }
 
+/// Distance from the top of a text line to its baseline, measured from the
+/// bottom of a "0" (digits sit exactly on the baseline). Lets text of different
+/// sizes be placed on one common baseline, like CSS `align-items: baseline`.
+pub fn baseline(ui: &Ui, font: FontId) -> f32 {
+    ui.painter().layout_no_wrap("0".into(), font, Color32::WHITE).mesh_bounds.max.y
+}
+
 // ---- Chamfered shapes: top-left and bottom-right corners are cut ----
 
 pub fn chamfer(rect: Rect, tl: f32, br: f32) -> Vec<Pos2> {

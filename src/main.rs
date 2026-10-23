@@ -587,16 +587,27 @@ fn status_line(ui: &mut Ui, v: &CardView) {
 
 fn number_block(ui: &mut Ui, v: &CardView) {
     // "≈" comes from the default font: Rajdhani draws it like a plain "=".
-    let prefix = layout_tracked(ui, v.prefix, egui::FontId::proportional(18.0), MUTED, 0.0);
-    let number = layout_tracked(ui, &v.number, display(34.0), v.color, 0.0);
-    let unit = layout_tracked(ui, v.unit, display(16.0), v.color, 0.0);
+    let prefix_font = egui::FontId::proportional(18.0);
+    let number_font = display(34.0);
+    let unit_font = display(16.0);
+    let prefix = layout_tracked(ui, v.prefix, prefix_font.clone(), MUTED, 0.0);
+    let number = layout_tracked(ui, &v.number, number_font.clone(), v.color, 0.0);
+    let unit = layout_tracked(ui, v.unit, unit_font.clone(), v.color, 0.0);
     let gap = 2.0;
-    let width = prefix.size.x + number.size.x + unit.size.x + gap * 2.0;
+    // Only count a gap next to a piece that is actually shown.
+    let pieces = [(&prefix, &prefix_font), (&number, &number_font), (&unit, &unit_font)];
+    let shown = pieces.iter().filter(|(t, _)| t.size.x > 0.0).count() as f32;
+    let width = prefix.size.x + number.size.x + unit.size.x + gap * (shown - 1.0).max(0.0);
     let (rect, _) = ui.allocate_exact_size(vec2(width, number.size.y), Sense::hover());
-    // Bottom-align the three pieces so the small ones sit on the number's baseline.
+    // Put all pieces on ONE baseline (the number's), so "%" and "≈" don't float
+    // below the digits like subscripts.
+    let baseline_y = rect.min.y + baseline(ui, number_font.clone());
     let mut x = rect.min.x;
-    for t in [&prefix, &number, &unit] {
-        paint_tracked(ui, pos2(x, rect.max.y - t.size.y), t);
+    for (t, font) in pieces {
+        if t.size.x <= 0.0 {
+            continue;
+        }
+        paint_tracked(ui, pos2(x, baseline_y - baseline(ui, font.clone())), t);
         x += t.size.x + gap;
     }
     if let Some(sub) = &v.sub {
