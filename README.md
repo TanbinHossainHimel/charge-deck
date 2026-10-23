@@ -84,6 +84,17 @@ The listing only reads Windows' device list; it never talks to unknown devices.
 3. Your programs are in `target\release\`: `charge-deck.exe` (the window) and
    `charge-deck-probe.exe` (the debug tool).
 
+### Design preview (no hardware needed)
+
+To see every card state (low, charging, estimated, asleep, checking, disconnected)
+or the empty screen, start the app with a fake-device switch. It never scans or
+touches any device:
+
+```
+set CHARGE_DECK_DEMO=1        & target\release\charge-deck.exe
+set CHARGE_DECK_DEMO=empty    & target\release\charge-deck.exe
+```
+
 ## Start with Windows
 
 Press `Win + R`, type `shell:startup`, press Enter, and drop a **shortcut** to

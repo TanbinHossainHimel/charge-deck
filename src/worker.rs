@@ -10,7 +10,7 @@ use hidapi::HidApi;
 use std::sync::mpsc::{channel, RecvTimeoutError, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 /// Gentle polling (rule 8): once every 2 minutes, plus manual refresh.
 pub const REFRESH_EVERY: Duration = Duration::from_secs(120);
@@ -20,6 +20,8 @@ pub struct Shared {
     pub deck: Deck,
     pub last_updated: Option<String>,
     pub scanning: bool,
+    /// When the next automatic scan starts (for the "Next scan" countdown).
+    pub next_scan: Option<Instant>,
 }
 
 pub type SharedState = Arc<Mutex<Shared>>;
@@ -34,7 +36,11 @@ pub fn spawn(shared: SharedState, wake_ui: impl Fn() + Send + 'static) -> Sender
         let mut hid: Option<HidApi> = None;
         let mut providers = registry();
         loop {
-            lock(&shared).scanning = true;
+            {
+                let mut s = lock(&shared);
+                s.scanning = true;
+                s.next_scan = None;
+            }
             wake_ui();
 
             match hid.as_mut() {
@@ -57,6 +63,7 @@ pub fn spawn(shared: SharedState, wake_ui: impl Fn() + Send + 'static) -> Sender
                 let mut s = lock(&shared);
                 s.scanning = false;
                 s.last_updated = Some(now_hhmm());
+                s.next_scan = Some(Instant::now() + REFRESH_EVERY);
             }
             wake_ui();
 

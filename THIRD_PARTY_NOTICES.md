@@ -59,6 +59,14 @@ dependencies):
 - `windows` (MIT / Apache-2.0) — Microsoft's official Windows API bindings
 - `eframe` / `egui` (MIT / Apache-2.0) — the window
 
+## Fonts
+
+- **Rajdhani** (Bold, SemiBold) — bundled in `assets/fonts/` and compiled into the exe,
+  because Charge Deck makes no network requests and cannot download fonts.
+  Copyright (c) 2014, Indian Type Foundry. Licensed under the SIL Open Font
+  License 1.1; the full text is in `assets/fonts/OFL.txt`.
+  Source: https://github.com/google/fonts/tree/main/ofl/rajdhani
+
 ## Trademarks
 
 Charge Deck is not affiliated with, endorsed by, or sponsored by ASUS, Razer,
