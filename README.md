@@ -14,6 +14,16 @@ Lowest battery first, so you see what needs charging at a glance.
 - Refreshes every 5 minutes, plus a **Refresh** button. Optional **Always on top**.
 - Runs as a normal user. No driver, no service, no network.
 
+## Download and install
+
+1. Download **`ChargeDeck-Setup-<version>.exe`** from the project's **Releases** page.
+2. Double-click it and click **Next → Next → Install → Finish**.
+
+That's it: no admin rights, no driver, no service. Windows may show a blue "Windows protected your PC"
+box because the installer isn't code-signed yet: click **More info → Run anyway**.
+Full guide, uninstalling and troubleshooting: **[INSTALL.md](INSTALL.md)**.
+(Prefer to build it yourself? That's in INSTALL.md too. Maintainers: see [RELEASING.md](RELEASING.md).)
+
 ## The honest truth: there is no universal way
 
 Every brand talks to its 2.4 GHz dongle with its own private protocol. So
@@ -100,6 +110,10 @@ set CHARGE_DECK_DEMO=empty    & target\release\charge-deck.exe
 ```
 
 ## Start with Windows
+
+**With the installer:** just tick *Start Charge Deck when I sign in to Windows* on the options page.
+
+**If you built it yourself:**
 
 Press `Win + R`, type `shell:startup`, press Enter, and drop a **shortcut** to
 `charge-deck.exe` into that folder.

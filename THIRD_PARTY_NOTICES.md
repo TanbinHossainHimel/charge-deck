@@ -58,6 +58,13 @@ dependencies):
 - `hidapi` (MIT) — USB HID access
 - `windows` (MIT / Apache-2.0) — Microsoft's official Windows API bindings
 - `eframe` / `egui` (MIT / Apache-2.0) — the window
+- `winresource` (MIT, build-time only) — embeds the icon and version info into the `.exe`
+
+## Installer tool
+
+- **Inno Setup** (Jordan Russell and Martijn Laan; its own free license) — used at build time to create
+  the setup wizard (`installer/charge-deck.iss`). Its license allows distributing the installers it
+  creates. It is not part of the Charge Deck source or the app.
 
 ## Fonts
 

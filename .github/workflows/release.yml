@@ -1,0 +1,71 @@
+# Builds the Windows setup wizard and attaches it to a GitHub Release.
+#
+# How to publish a new version:
+#   1. Change `version` in Cargo.toml (for example to 0.2.0) and commit.
+#   2. Tag it and push the tag:   git tag v0.2.0 && git push origin v0.2.0
+#   3. This workflow builds ChargeDeck-Setup-0.2.0.exe and attaches it (plus its
+#      SHA-256 checksum) to a new release. Users download it from the Releases page.
+#
+# Every run (also manual ones from the Actions tab) uploads the installer as a
+# workflow artifact, so you can test a build without publishing it.
+#
+# NOTE: written without being able to run it on GitHub yet. If a step fails the
+# first time, the log will say which; the local script installer\build-installer.ps1
+# does the same thing and was tested.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write # needed to create the release and upload files
+
+jobs:
+  windows-installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Tag must match the version in Cargo.toml
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          $cargo = (Select-String -Path Cargo.toml -Pattern '^version\s*=\s*"([^"]+)"' | Select-Object -First 1).Matches[0].Groups[1].Value
+          $tag = "${{ github.ref_name }}".TrimStart("v")
+          if ($cargo -ne $tag) { throw "Tag v$tag does not match Cargo.toml version $cargo" }
+
+      - name: Install Inno Setup if the runner doesn't have it
+        shell: pwsh
+        run: |
+          $found = (Get-Command iscc -ErrorAction SilentlyContinue) -or (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")
+          if (-not $found) { choco install innosetup -y --no-progress }
+
+      - name: Run the tests
+        run: cargo test --release
+
+      - name: Build the installer
+        shell: pwsh
+        run: ./installer/build-installer.ps1
+
+      - name: Keep the installer as a workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ChargeDeck-Setup
+          path: |
+            dist/*.exe
+            dist/*.sha256
+
+      - name: Attach it to the GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.exe
+            dist/*.sha256
+          generate_release_notes: true

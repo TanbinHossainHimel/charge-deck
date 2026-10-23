@@ -37,6 +37,11 @@ Pull requests that break any of these are **rejected**.
 12. **Honesty in the README.** Don't claim anti-cheat safety beyond what the README says.
 13. **One provider failing must never stop the others.** Never panic; return an empty list instead. (The runner also catches panics, but don't rely on it.)
 
+## The installer follows the same rules
+
+`installer\charge-deck.iss` (the setup wizard) must also stay **per-user, no admin rights, no driver, no
+service, no network access, no packers**. Releasing is described in [RELEASING.md](RELEASING.md).
+
 ## License rule
 
 Charge Deck is **MIT**. Some great projects are **GPL** (OpenRazer, Solaar,
