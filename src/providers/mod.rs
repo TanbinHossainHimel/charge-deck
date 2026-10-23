@@ -9,6 +9,7 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 
 pub mod asus;
 pub mod bluetooth;
+pub mod controllers;
 pub mod razer_barracuda;
 
 /// One source of battery information (a brand, or "Bluetooth", ...).
@@ -33,6 +34,7 @@ pub fn registry() -> Vec<Box<dyn Provider>> {
         Box::new(asus::Asus),
         Box::new(razer_barracuda::RazerBarracuda::default()),
         Box::new(bluetooth::Bluetooth),
+        Box::new(controllers::Controllers::default()),
     ]
 }
 

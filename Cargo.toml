@@ -30,6 +30,12 @@ features = [
     "Win32_System_SystemInformation",
     "Win32_Devices_DeviceAndDriverInstallation",
     "Win32_Devices_Properties",
+    "Win32_System_WinRT",
+    "Win32_UI_Input_XboxController",
+    "Gaming_Input",
+    "System_Power",
+    "Devices_Power",
+    "Foundation_Collections",
 ]
 
 # NOTE: we do NOT use panic = "abort". Each provider runs inside catch_unwind,
