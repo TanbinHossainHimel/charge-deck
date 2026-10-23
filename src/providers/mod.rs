@@ -12,6 +12,8 @@ pub mod bluetooth;
 pub mod controllers;
 pub mod logitech;
 pub mod razer_barracuda;
+// Example for contributors. Compiled (so it stays correct) but NOT registered.
+pub mod template;
 pub mod razer_mouse;
 
 /// One source of battery information (a brand, or "Bluetooth", ...).
